@@ -36,6 +36,7 @@ int             filewrite(struct file*, char*, int n);
 int             filelseek(struct file*,_off_t); // part 4
 
 
+
 // fs.c
 void            readsb(int dev, struct superblock *sb);
 int             dirlink(struct inode*, char*, uint);
@@ -202,4 +203,5 @@ typedef struct{
     char link[20];
 } sysLinkData;
 
-
+// part 4 clone syscall
+int clone(void(*)(void*), void *, void*);

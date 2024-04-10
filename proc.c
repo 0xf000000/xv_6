@@ -708,3 +708,53 @@ ticks_running(int pid)
   return -1; 
 }
 
+// allocate space for clone and pass it into same adress space
+int clone(void(*fcn)(void*), void *arg, void* stack){
+
+    int i, pid;
+    struct proc *newProcc;
+     struct proc* currentProcc = myproc();
+    // well something really bad has to happen in order for this to execute but better having a checkup
+     if( currentProcc == 0){
+       panic(" clone: cant return current procces\n");
+       }
+
+    int* ustack = stack + PGSIZE - 4;
+
+  
+    if( (newProcc = allocproc()) == 0){
+      return -1;
+    }
+
+    newProcc->pgdir = currentProcc->pgdir;
+    newProcc->sz = currentProcc->sz;
+    
+    newProcc->ustack = stack;
+    newProcc->parent = 0;
+    *newProcc->tf = *currentProcc->tf;
+
+
+    newProcc->tf->eax = newProcc->pid;
+    newProcc->tf->ebp = (int) ustack - 4;
+    newProcc->tf->esp = (int) ustack - 4;
+    newProcc->tf->eip = (int) fcn; 
+
+    *ustack = (int) arg;
+
+
+    *(ustack -1) = 0xffffffff;
+    *(ustack -2) = 0xffffffff;
+
+    for(int i = 0; i < NOFILE; i++){
+      if(currentProcc->ofile[i]){
+        newProcc->ofile[i] = filedup(newProcc->ofile[i]);
+      }
+
+      newProcc->cwd = idup(currentProcc->ofile[i])
+
+    }
+    
+
+
+
+}

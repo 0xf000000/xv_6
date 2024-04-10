@@ -136,9 +136,7 @@ int filewrite(struct file *f, char *addr, int size)
     // might be writing a device like the console.
 
     // filling with nullbytes
-    if(f->ip->size  > f->off ){
-    
-      
+    if(f->ip->size  < f->off && size != 0  ){
       uint difference = f->off - f->ip->size;
       for( int i = 0; i < difference; i++ ){
        
@@ -153,12 +151,7 @@ int filewrite(struct file *f, char *addr, int size)
    
       
       }
-
-    
-    
-    
     }
-    
     
     int i = 0;
     while(i < size){

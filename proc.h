@@ -60,6 +60,8 @@ struct proc {
   enum procstate state;        // Process state
   int pid;                     // Process ID
   struct proc *parent;         // Parent process
+  struct proc* parentThread;   // part 5 parentThread
+  void* ustack;                // part 5 user stack for multithreading
   struct trapframe *tf;        // Trap frame for current syscall
   struct context *context;     // swtch() here to run process
   void *chan;                  // If non-zero, sleeping on chan
@@ -74,6 +76,7 @@ struct proc {
   uint wait_time;
   uint start_time;
   int ticks_runs;
+  
 };
 
 // Process memory is laid out contiguously, low addresses first:
@@ -82,3 +85,5 @@ struct proc {
 //   fixed-size stack
 //   expandable heap
 //int ticks_running(int pid);
+
+

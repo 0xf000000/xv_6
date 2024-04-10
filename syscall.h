@@ -26,3 +26,4 @@
 #define SYS_ticks_running 25
 #define SYS_lseek 26
 #define SYS_symlink 27
+#define SYS_clone 28

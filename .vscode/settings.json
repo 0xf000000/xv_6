@@ -1,5 +1,10 @@
 {
     "files.associations": {
-        "defs.h": "c"
+        "defs.h": "c",
+        "memlayout.h": "c",
+        "x86.h": "c",
+        "proc.h": "c",
+        "mmu.h": "c",
+        "param.h": "c"
     }
 }
