@@ -1,0 +1,113 @@
+# OS Project-1 README
+
+> Team members Names:
+Deepthi Muttineni --> U88032559
+Siddhartha Reddy Guthikonda --> U62740661
+Chakradhar Redddy Nallu  --> U221288965
+
+
+
+> System Requirements and additional packages
+
+- OS: Ubuntu 22.04 LTS
+- Processor: i7
+
+######Ls command:::::
+Description:
+ls command is used to list all the files and subdirectories present in the given directory.
+We have made three changes to the existing ls command.
+Hidden hidden files and directories:
+When the ls command is given to the command line, then it prints all the files and directories excluding hidden.
+Implementation/comments:
+By adding the extra condition, de.name[0]==hidden inside the while loop of case: T_DIR.
+this condition checks for the files and directory names that start with "." and skips retrieving of those files by using the continue statement. 
+
+differentiating directories from files:
+Description:
+This updated ls command also differentiates the directories with files by printing "/" at the end of the directory names.
+comments:
+When any parameters like "-a" are sent to the 'ls' function, viewHidden is set to 1. Alternatively, 0. Proceed if the files have a "." at the start. This will perform the 'ls -a' command and create a note to display the hidden files.
+When the file type is "T_FILE" (ordinary file), no special characters are printed along with the file's metadata.
+It adds a '/' character to the directory names and outputs directory information when the file type is T_DIR (directory).
+
+
+####Sleep command:::::
+Description:
+sleep command is used to pause the execution of a process for a given number of ticks.
+Installation:
+we call the sleep command by using "sleep" keyword in the command line interface. when we compile the xv6 code using the command "make qemu-nox", sleep command is also compiled. We can perform the sleep command operations in the shell.
+Syntax:
+It contains simple syntax, 
+specify the ticks -->sleep 100
+Note: here 100 is the ticks
+Arguments:
+sleep command must contain 2 arguments, one argument is specifying sleep command and other argument is specifying number of ticks the execution of process should stop.
+comments:
+written an if statement in the main function to check for the argument count should be less than 2
+if atleast one argument is not provided then the sleep prints an error message
+if the argument count is 2 then the passed argument string is converted into an integer by using "atoi" method from ulib.c file.
+Then sleep(ticks) is passed.
+call the exit func at the end of program.
+
+####Uniq command:::::
+Description:
+In the code we used :
+If argc is 1, indicating no additional arguments, 
+or if argc is 2 and the second argument is one of -c, -u, or -w, the code reads input from standard input (file descriptor 0) using the read system call.
+If the second argument is -w, the code compares lines based on a specified prefix length (letter_compare_count) and prints lines where the prefix differs from the previous line.
+If the second argument is -c, the code counts duplicate lines and prints each unique line along with its count.
+If the second argument is -u, the code prints only the unique lines (lines that occur only once).
+
+hidden[]: Character array to hold input data read from file
+Curr_linehidden[]: Character array to store current line
+Prev_linehidden[]: Character array to store previous line
+
+Implementation/comments:
+-->The main() function handles command line arguments and opens the input file. 
+It reads parts of data from the file into a character array buffer.
+ As characters are copied into the cur_line array, it tracks the current line.
+Loops through hidden[] character-by-character
+Uses strncpy() to build Curr_linehidden[]
+At newline, compares Curr_linehidden and Prev_linehidden
+Prints based on options
+Resets Curr_linehidden[]
+
+-->At newline, the previous line prev_linehidden is compared against the current line curr_linehidden using string comparison. 
+If lines are equal, the duplicate count is updated. 
+If unequal, prev_linehidden is printed and copied to curr_linehidden before resetting cur_line for the next line.
+
+-->Helper functions like strncpy() and read() handle defined tasks like copying characters and reading file input.
+
+
+#####find command:::::
+Find Command:
+Overview: 
+Find searches for files recursively in a directory tree. It supports searching by filename, type, and inode number.
+Usage:
+-->find [path] [options] :
+we have checked for the b file with the command 
+i.e. find . -name [options]
+----->
+-name filename - Search for filenames matching [name]          
+-type f - Only search files 
+-type d -Search  directories
+-inum k - Search for inode number [k]  --> k is inode number
+-inum +k - Search for inode > [k] 
+-->find . -name b -inum +k  and gives all files named b above given inode number
+-inum -k - Search for inode < [b] 
+-->find . -name b -inum -k  gives all files named b below given unique inode number.
+-printi - Print inode number for each match
+
+-->findname():
+The core logic is in findname(), which recursively traverses the directory tree.
+It uses readdir() and stat() to get directory entries and metadata.
+
+Implementation:
+
+-->we implemented the find command which searches for files recursively through directories.
+ we took a recursive approach, using a findname() helper function to traverse the full directory tree by calling itself on subdirectories. 
+-->For argument parsing, we validated the number of arguments and options like -name in main().
+ we have passed these options to findname() to guide the search.
+--> made use of the file type field that stat() supplied for type filtering.
+To search by inode number,  converted the args to ints and compared against the inode returned in the stat results. 
+-->we handled -inum + and - cases as well.

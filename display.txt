@@ -1,0 +1,14 @@
+Features of Operating system are :
+User Interface
+Process Management
+Memory Management
+File System Management
+Device Management
+Security
+Networking
+Error Detection and Handling
+System Utilities
+Multi-user Support
+Multi-tasking/Multi-threading
+Virtualization
+Compatibility
