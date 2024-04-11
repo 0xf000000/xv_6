@@ -750,7 +750,7 @@ int clone(void(*fcn)(void*), void *arg, void* stack){
         newProcc->ofile[i] = filedup(newProcc->ofile[i]);
       }
 
-      newProcc->cwd = idup(currentProcc->ofile[i])
+      newProcc->cwd = idup(currentProcc->ofile[i]);
 
     }
     

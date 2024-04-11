@@ -319,28 +319,13 @@ sys_open(void)
     }
     
     ilock(ip);
-  
-    if( ip->type == T_SYMLINK && !(omode & O_NOFOLLOW) ){
-     sysLinkData sysdata;
+    cprintf("[±] can lock inode\n");
+    if( ip->type == T_SYMLINK){
+     char targetPath[20];
+     readi(ip, &targetPath , 0, 20);
      
-     int size =  readi(ip, (char*)&sysdata, 0, sizeof(sysdata));
     
-      if ( size <= 0 ){
-        panic("size is - in minus ");
-       return -1;
-      }
-    
-      // this is ugly but i think its the best way so it works
-      iunlock(ip);
-      ip = namei( (char*) sysdata.link);
-
-
-       if(ip == 0 ){
-        panic("cant find it");
-        end_op();
-        return -1;
-       }
-       ilock(ip);
+      cprintf("%s this is the date in the node\n", targetPath);
 
       
     }
@@ -540,78 +525,63 @@ sys_open(void)
 }
 */
 
+int getStringLength(char * string){
+  int i = 0;
+
+  while( *string != '\0'){
+    i++;
+    string++;
+  }
+
+
+  return i;
+}
+
 int sys_symlink(void){
-  
-  char* target;
-  char* path;
-  int targetSize = 0;
-  // fetch syscall arguments
-    if(argstr(0, &target) < 0){
-      return -1;
-    }
+  sysLinkData link;
+  struct inode* inode;
+  struct file* file;
+  char* target, *path;
+  int targetPathLength = 0;
 
-    if(argstr(1, &path) < 0){
-      return -1;
-    }
-    //getting size of target path
-    while( *target != '\0' ){
-      targetSize++;
-      target++;
-    }
-   
-    
-   struct inode* ip;
-   struct file* file;
-   
-  // saving symlink path in a file, if that path gets called with an other syscall, the func should redirect
+  if(argstr(0,&target )  < 0 || argstr(1, &path) < 0){
+    cprintf("[-] cant get user Parameter are u sure you privovided them correctly\n");
+    return -1;
+  }
+
+   targetPathLength  = getStringLength(target);
+
   begin_op();
-    ip = create(path, T_SYMLINK, 0, 0);
-    
-    if( ip == 0){
-     
+    inode = create(path, T_SYMLINK, 0 , 0 );
+    if( inode == 0 ){
+      cprintf("[-] cant create a new inode\n");
+      return -1;
+    }
+
+    if( (file = filealloc()) == 0 ){
+      fileclose(file);
+      cprintf("[-] cant allocate file \n");
+      return -1;
+    }
+  
+    file->type = FD_INODE;
+    file->ip  = inode;
+    file->off = 0;
+    file->readable = 0;
+    file->writable = 1;
+
+    filewrite(file, target,targetPathLength + 1 );
+
+    if(filewrite < 0 ){
+      cprintf("[-] cant write to file syslink\n");
       end_op();
       return -1;
     }
-   // well you can never be to sure right?
-    ip = namei(path);
-    
-    if( ip == 0){
-      
-      end_op();
-      return -1;
-    }
-    sysLinkData linkData;
-    
-    strncpy(linkData.link, target, sizeof(linkData.link));
-    
-      //writing the path to take into the inode
-         
-      writei(ip, (char*) &linkData, 0, targetSize);
-     
+    fileclose(file);
+   end_op();
 
-    file = filealloc();
-    
-    if( file == 0 ){
-      if(file)
-        { fileclose(file);}
-      iunlockput(ip);
-     end_op();
-     return -1;
-    }
-  
-  
-  file->type = T_SYMLINK;
-  file->ip = ip;
-  file->off = 0;
-  file->readable = 1;
-  file->writable = 1;
+    return 0;
 
-  iunlock(ip);
-  iput(ip);
-  
-  end_op();
-  
-  return 0;
 
   }
 
