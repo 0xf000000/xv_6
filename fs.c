@@ -419,7 +419,10 @@ bmap(struct inode *ip, uint bn)
     if((addr = a[pos]) == 0){
       a[pos] = addr = balloc(ip->dev);
       log_write(bp);
+
     }
+
+    return addr;
 
   }
 
