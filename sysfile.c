@@ -247,6 +247,9 @@ create(char *path, short type, short major, short minor)
 {
   struct inode *ip, *dp;
   char name[DIRSIZ];
+  
+
+
 
   if((dp = nameiparent(path, name)) == 0)
     return 0;
@@ -304,7 +307,12 @@ sys_open(void)
   
 
   if(omode & O_CREATE){
+    if(omode & O_EXTENT){
+      ip = create(path, T_EXTENT,0,0);
+    }
+    else{
     ip = create(path, T_FILE, 0, 0);
+    }
     if(ip == 0){
       end_op();
       return -1;

@@ -25,7 +25,7 @@
 static void itrunc(struct inode*);
 // there should be one superblock per disk device, but we run with
 // only one device
-struct superblock sb; 
+struct superblock sb;
 
 // Read the super block.
 void
@@ -172,7 +172,7 @@ void
 iinit(int dev)
 {
   int i = 0;
-  
+
   initlock(&icache.lock, "icache");
   for(i = 0; i < NINODE; i++) {
     initsleeplock(&icache.inode[i].lock, "inode");
@@ -358,6 +358,19 @@ iunlockput(struct inode *ip)
   iunlock(ip);
   iput(ip);
 }
+  // generate extent address 24 bits address the lastone are the lenght so u can only store lenghts till 255 
+  uint GEN_ADDRESS(uint address, unsigned char length){
+    return (address << 8 | length);
+  }
+  // extract lenght perform AND operation on the last 8 bits
+  unsigned char EXT_LENGTH(uint address){
+    return (address & 0x00ff);
+  
+  }
+    // just shift the bits 8 places to the right so we get the address
+  uint EXT_ADDRESS (uint address){
+    return (address >> 8);
+  }
 
 //PAGEBREAK!
 // Inode content
@@ -366,7 +379,11 @@ iunlockput(struct inode *ip)
 // in blocks on the disk. The first NDIRECT block numbers
 // are listed in ip->addrs[].  The next NINDIRECT blocks are
 // listed in block ip->addrs[NDIRECT].
-
+// part 4 task 4 
+//1. programm a way to save 8 unsigned char in uint 32 bits
+// 2. wind a way to extract the address
+// 3. find a way to only extract the length 
+// 4. generate a address like describet so basically an 32 bit uint with the first 8 bits representing the length of the blocks and the second 24 bits the corresponding address 
 // Return the disk block address of the nth block in inode ip.
 // If there is no such block, bmap allocates one.
 static uint
@@ -374,6 +391,58 @@ bmap(struct inode *ip, uint bn)
 {
   uint addr, *a;
   struct buf *bp;
+
+
+  if( ip->type ==  T_EXTENT){
+     // 1 check if aleready an allocated block exists and return that address
+
+
+     int i = 0;
+     uint currentLength = 0 ;
+     while(ip->addrs[i]){
+      
+      uint length = EXT_LENGTH(ip->addrs[i]);
+
+      if(bn >=  currentLength && bn < currentLength + length){
+
+        addr = EXT_ADDRESS(ip->addrs[i]) + bn - currentLength;
+
+        return addr;
+      }
+
+
+      currentLength += length;
+      
+      if( i > NDIRECT){
+        break;
+      }
+      i++;
+     }
+
+    // 2. if no such block exists we will thanos it ourselfs ... 
+
+    if( i > NDIRECT){
+      panic("extent based kinda did not wo really well\n");
+    }
+
+    uint newBlock = balloc(ip->dev);
+
+    // check the last address if we can take it in there
+    uint lastLenght = EXT_LENGTH(ip->addrs[i-1]);
+    
+    if( (newBlock ==  EXT_ADDRESS(ip->addrs[i-1]) + lastLenght) && EXT_LENGTH(ip->addrs[i-1]) < 0xff ){
+
+      ip->addrs[i -1] += 1;
+
+    }else{
+      ip->addrs[i] = GEN_ADDRESS(newBlock, 1 );
+    }
+
+
+    return newBlock;
+  }
+
+
 
   if(bn < NDIRECT){
     if((addr = ip->addrs[bn]) == 0)
@@ -383,9 +452,12 @@ bmap(struct inode *ip, uint bn)
   bn -= NDIRECT;
 
   if(bn < NINDIRECT){
-    // Load indirect block, allocating if necessary.
-    if((addr = ip->addrs[NDIRECT]) == 0)
-      ip->addrs[NDIRECT] = addr = balloc(ip->dev);
+
+    // check if first block is allocated
+    if((addr = ip->addrs[NDIRECT]) == 0){
+      ip->addrs[NDIRECT] = addr = balloc(ip->dev); // if not allocate BLock
+    }
+
     bp = bread(ip->dev, addr);
     a = (uint*)bp->data;
     if((addr = a[bn]) == 0){
@@ -395,17 +467,19 @@ bmap(struct inode *ip, uint bn)
     brelse(bp);
     return addr;
   }
-  // PART 4 number 3 
+  // PART 4 number 3
   bn -= NINDIRECT;
   if(bn < NDOUBLY_INDIRECT){
     if((addr = ip->addrs[NDIRECT + 1]) == 0 ){
-      ip->addrs[NDIRECT + 1] = addr = balloc(ip->dev);
-      bp = bread(ip->dev, addr);
-      a = (uint*) bp->data;
+      ip->addrs[NDIRECT + 1] = addr = balloc(ip->dev); // just the same as the indirect alloc if not there
     }
 
-    uint doubleIndex = bn / NINDIRECT;
-    if((addr = a[doubleIndex]) == 0){
+    // read address out of block
+    bp = bread(ip->dev, addr);
+    a = (uint*) bp->data;
+
+    uint doubleIndex = bn / NINDIRECT; // we need to use another index now cause inside of the block we have uint addresses so 8 bit address uint is unsigned char we have 512 but we can write 255 addresses in an indirect block
+    if((addr = a[doubleIndex]) == 0){ // this is second layer
       a[doubleIndex] = addr = balloc(ip->dev);
       log_write(bp);
     }
@@ -416,14 +490,13 @@ bmap(struct inode *ip, uint bn)
     a = (uint*)bp->data;
     uint pos = bn % NINDIRECT;
 
-    if((addr = a[pos]) == 0){
+    if((addr = a[pos]) == 0){ // third layer where we look into the blocks if its 0 we alloc it
       a[pos] = addr = balloc(ip->dev);
       log_write(bp);
 
     }
 
     return addr;
-
   }
 
 
@@ -520,7 +593,7 @@ writei(struct inode *ip, char *src, uint off, uint n)
       return -1;
     return devsw[ip->major].write(ip, src, n);
   }
-  
+
   //if(off > ip->size || off + n < off) // the second condition is really weird how can uint be < 0
     //return -1;
   // i just leave it like this for now

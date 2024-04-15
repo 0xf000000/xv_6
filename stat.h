@@ -1,8 +1,8 @@
 #define T_DIR  1   // Directory
 #define T_FILE 2   // File
 #define T_DEV  3   // Device
-#define T_SYMLINK 4 // systemLink
-#define T_DEBUG 5
+#define T_SYMLINK 4 // project 4 task 2 systemLink
+#define T_EXTENT 5 // project 4 task 4 extend based
 
 struct stat {
   short type;  // Type of file
